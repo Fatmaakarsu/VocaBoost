@@ -6,9 +6,11 @@
 
 // ── State ──────────────────────────────────────────────
 const state = {
-  words:   [],
-  index:   0,
-  flipped: false,
+  words:       [],   // aktif (filtrelenmiş) kelimeler
+  allWords:    [],   // tüm kelimeler (orijinal)
+  index:       0,
+  flipped:     false,
+  filter:      'all', // 'all' | 'learned' | 'difficult' | 'favorites'
 };
 
 // ── DOM Refs ────────────────────────────────────────────
@@ -26,6 +28,102 @@ const progressText = document.getElementById('progressText');
 const wordGrid     = document.getElementById('wordGrid');
 const themeToggle  = document.getElementById('themeToggle');
 
+// Progress butonları (kart üstü)
+const btnLearned   = document.getElementById('btnLearned');
+const btnDifficult = document.getElementById('btnDifficult');
+const btnFavorite  = document.getElementById('btnFavorite');
+
+// Stats bar
+const statLearned  = document.getElementById('statLearned');
+const statLearnedBar = document.getElementById('statLearnedBar');
+
+// Filter butonları
+const filterBtns   = document.querySelectorAll('.filter-btn');
+
+// Empty state
+const emptyState   = document.getElementById('emptyState');
+
+// ── localStorage Progress ───────────────────────────────
+const STORAGE_KEY = 'wf-progress';
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* ignore */ }
+  return { learned: [], difficult: [], favorites: [] };
+}
+
+function saveProgress(progress) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+}
+
+// Tek kayıt noktası — her zaman taze oku & yaz
+function getProgress() { return loadProgress(); }
+
+function markLearned(word) {
+  const p = getProgress();
+  const key = word.english;
+  if (p.learned.includes(key)) {
+    p.learned = p.learned.filter(w => w !== key);   // toggle off
+  } else {
+    p.learned.push(key);
+    p.difficult = p.difficult.filter(w => w !== key); // learned ise difficult'tan çıkar
+  }
+  saveProgress(p);
+  refreshCardButtons();
+  refreshStats();
+  refreshWordGrid();
+}
+
+function markDifficult(word) {
+  const p = getProgress();
+  const key = word.english;
+  if (p.difficult.includes(key)) {
+    p.difficult = p.difficult.filter(w => w !== key); // toggle off
+  } else {
+    p.difficult.push(key);
+    p.learned = p.learned.filter(w => w !== key);     // difficult ise learned'dan çıkar
+  }
+  saveProgress(p);
+  refreshCardButtons();
+  refreshStats();
+  refreshWordGrid();
+}
+
+function addFavorite(word) {
+  const p = getProgress();
+  const key = word.english;
+  if (p.favorites.includes(key)) {
+    p.favorites = p.favorites.filter(w => w !== key); // toggle off
+  } else {
+    p.favorites.push(key);
+  }
+  saveProgress(p);
+  refreshCardButtons();
+  refreshWordGrid();
+}
+
+// ── Stats Bar ───────────────────────────────────────────
+function refreshStats() {
+  const p = getProgress();
+  const total = state.allWords.length;
+  const count = p.learned.length;
+  const pct   = total ? Math.round((count / total) * 100) : 0;
+  statLearned.textContent  = `${count} / ${total} öğrenildi · %${pct}`;
+  statLearnedBar.style.width = pct + '%';
+}
+
+// ── Card Action Buttons ─────────────────────────────────
+function refreshCardButtons() {
+  const w = state.words[state.index];
+  if (!w) return;
+  const p = getProgress();
+  btnLearned.classList.toggle('active-learned',    p.learned.includes(w.english));
+  btnDifficult.classList.toggle('active-difficult', p.difficult.includes(w.english));
+  btnFavorite.classList.toggle('active-favorite',   p.favorites.includes(w.english));
+}
+
 // ── Theme ───────────────────────────────────────────────
 (function initTheme() {
   const saved = localStorage.getItem('wf-theme') || 'dark';
@@ -41,12 +139,48 @@ themeToggle.addEventListener('click', () => {
   themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
 });
 
+// ── Filter ──────────────────────────────────────────────
+function applyFilter(filter) {
+  state.filter = filter;
+  const p = getProgress();
+
+  const map = {
+    all:       () => [...state.allWords],
+    learned:   () => state.allWords.filter(w => p.learned.includes(w.english)),
+    difficult: () => state.allWords.filter(w => p.difficult.includes(w.english)),
+    favorites: () => state.allWords.filter(w => p.favorites.includes(w.english)),
+  };
+
+  state.words = (map[filter] || map.all)();
+  state.index = 0;
+
+  // Filtre butonlarını güncelle
+  filterBtns.forEach(btn => {
+    btn.classList.toggle('filter-active', btn.dataset.filter === filter);
+  });
+
+  const isEmpty = state.words.length === 0;
+  emptyState.style.display  = isEmpty ? 'flex' : 'none';
+  scene.style.visibility    = isEmpty ? 'hidden' : 'visible';
+
+  if (!isEmpty) {
+    renderCard(false);
+  }
+  renderWordGrid();
+}
+
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => applyFilter(btn.dataset.filter));
+});
+
 // ── Fetch Words ─────────────────────────────────────────
 async function loadWords() {
   try {
     const res = await fetch('words.json');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    state.words = await res.json();
+    state.allWords = await res.json();
+    state.words    = [...state.allWords];
+    refreshStats();
     renderCard();
     renderWordGrid();
   } catch (err) {
@@ -60,33 +194,30 @@ function renderCard(animate = false) {
   const w = state.words[state.index];
   if (!w) return;
 
-  // Reset flip
   state.flipped = false;
   card.classList.remove('flipped');
 
-  // Update content
   wordEl.textContent    = w.english;
   turkishEl.textContent = w.turkish;
   exampleEl.textContent = `"${w.example}"`;
 
-  // Progress
+  // Kart indeks progress (filtrelenmiş listeye göre)
   const pct = Math.round(((state.index + 1) / state.words.length) * 100);
   progressFill.style.width = pct + '%';
   progressText.textContent = `${state.index + 1} / ${state.words.length}`;
 
-  // Slide animation
   if (animate) {
     scene.classList.remove('animate');
-    void scene.offsetWidth; // reflow
+    void scene.offsetWidth;
     scene.classList.add('animate');
   }
 
-  // Highlight active pill
+  refreshCardButtons();
+
   document.querySelectorAll('.word-pill').forEach((pill, i) => {
     pill.classList.toggle('active', i === state.index);
   });
 
-  // Scroll active pill into view
   const activePill = document.querySelector('.word-pill.active');
   if (activePill) activePill.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
@@ -98,12 +229,10 @@ function flipCard() {
 }
 
 scene.addEventListener('click', (e) => {
-  // Don't flip if speak button clicked
-  if (e.target.closest('.speak-btn')) return;
+  if (e.target.closest('.speak-btn') || e.target.closest('.card-actions')) return;
   flipCard();
 });
 
-// Keyboard support
 document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowRight' || e.key === 'l') nextCard();
   if (e.key === 'ArrowLeft'  || e.key === 'h') prevCard();
@@ -113,11 +242,13 @@ document.addEventListener('keydown', (e) => {
 
 // ── Navigation ──────────────────────────────────────────
 function nextCard() {
+  if (!state.words.length) return;
   state.index = (state.index + 1) % state.words.length;
   renderCard(true);
 }
 
 function prevCard() {
+  if (!state.words.length) return;
   state.index = (state.index - 1 + state.words.length) % state.words.length;
   renderCard(true);
 }
@@ -140,6 +271,25 @@ btnNext.addEventListener('click', nextCard);
 btnPrev.addEventListener('click', prevCard);
 btnShuffle.addEventListener('click', shuffleWords);
 
+// ── Card Action Buttons Events ──────────────────────────
+btnLearned.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const w = state.words[state.index];
+  if (w) markLearned(w);
+});
+
+btnDifficult.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const w = state.words[state.index];
+  if (w) markDifficult(w);
+});
+
+btnFavorite.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const w = state.words[state.index];
+  if (w) addFavorite(w);
+});
+
 // ── Text to Speech ──────────────────────────────────────
 function speak() {
   const w = state.words[state.index];
@@ -153,7 +303,7 @@ function speak() {
   utter.pitch = 1;
 
   speakBtn.classList.add('speaking');
-  utter.onend = () => speakBtn.classList.remove('speaking');
+  utter.onend  = () => speakBtn.classList.remove('speaking');
   utter.onerror = () => speakBtn.classList.remove('speaking');
 
   window.speechSynthesis.speak(utter);
@@ -165,14 +315,25 @@ speakBtn.addEventListener('click', (e) => {
 });
 
 // ── Word Grid ────────────────────────────────────────────
+function refreshWordGrid() {
+  renderWordGrid();
+}
+
 function renderWordGrid() {
+  const p = getProgress();
   wordGrid.innerHTML = '';
   state.words.forEach((w, i) => {
+    const tags = [];
+    if (p.learned.includes(w.english))   tags.push('<span class="pill-tag tag-learned">✅</span>');
+    if (p.difficult.includes(w.english)) tags.push('<span class="pill-tag tag-difficult">⚠️</span>');
+    if (p.favorites.includes(w.english)) tags.push('<span class="pill-tag tag-favorite">⭐</span>');
+
     const pill = document.createElement('button');
     pill.className = 'word-pill' + (i === state.index ? ' active' : '');
     pill.innerHTML = `
       <span class="pill-en">${w.english}</span>
       <span class="pill-tr">${w.turkish}</span>
+      ${tags.length ? `<span class="pill-tags">${tags.join('')}</span>` : ''}
     `;
     pill.addEventListener('click', () => {
       state.index = i;
