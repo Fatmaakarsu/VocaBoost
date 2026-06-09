@@ -1,0 +1,436 @@
+/* ===========================
+   WordFlip — style.css
+   =========================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ── Reset & Base ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:        #0F172A;
+  --surface:   #1E293B;
+  --surface2:  #293548;
+  --border:    #334155;
+  --accent:    #F59E0B;
+  --accent2:   #FCD34D;
+  --text:      #F1F5F9;
+  --text-muted:#94A3B8;
+  --danger:    #EF4444;
+  --radius:    20px;
+  --shadow:    0 25px 60px rgba(0,0,0,0.5);
+  --transition:0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="light"] {
+  --bg:        #F0F4F8;
+  --surface:   #FFFFFF;
+  --surface2:  #E8EFF6;
+  --border:    #CBD5E1;
+  --text:      #0F172A;
+  --text-muted:#64748B;
+  --shadow:    0 25px 60px rgba(15,23,42,0.12);
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 1rem 3rem;
+  transition: background var(--transition), color var(--transition);
+  overflow-x: hidden;
+}
+
+/* ── Header ── */
+header {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-icon {
+  width: 34px;
+  height: 34px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.logo-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.logo-text span {
+  color: var(--accent);
+}
+
+/* Dark mode toggle */
+.theme-toggle {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.theme-toggle:hover {
+  background: var(--border);
+  transform: rotate(20deg);
+}
+
+/* ── Progress Bar ── */
+.progress-container {
+  width: 100%;
+  max-width: 520px;
+  margin-bottom: 1.5rem;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.progress-track {
+  height: 5px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 99px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Flashcard Scene ── */
+.scene {
+  width: 100%;
+  max-width: 520px;
+  height: 340px;
+  perspective: 1200px;
+  margin-bottom: 2rem;
+  cursor: pointer;
+}
+
+.card {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.card__face {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* glow top-left accent */
+.card__face::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: -60px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(245,158,11,0.15), transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.card__back {
+  transform: rotateY(180deg);
+}
+
+/* Front face */
+.card-hint {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.card-word {
+  font-size: clamp(2.2rem, 8vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  margin-bottom: 1.25rem;
+}
+
+.speak-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(245,158,11,0.12);
+  border: 1.5px solid rgba(245,158,11,0.3);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+  font-family: inherit;
+}
+
+.speak-btn:hover {
+  background: rgba(245,158,11,0.22);
+  transform: scale(1.04);
+}
+
+.speak-btn:active {
+  transform: scale(0.97);
+}
+
+.speak-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Back face */
+.card-turkish {
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+
+.divider {
+  width: 40px;
+  height: 2px;
+  background: var(--border);
+  border-radius: 99px;
+  margin-bottom: 1rem;
+}
+
+.card-example {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+  font-style: italic;
+  max-width: 340px;
+}
+
+.flip-hint {
+  position: absolute;
+  bottom: 1rem;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  opacity: 0.6;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── Navigation Buttons ── */
+.nav-buttons {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.btn {
+  flex: 1;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.btn:active { transform: scale(0.96); }
+
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #0F172A;
+  box-shadow: 0 4px 20px rgba(245,158,11,0.35);
+}
+
+.btn-primary:hover {
+  background: var(--accent2);
+  box-shadow: 0 6px 28px rgba(245,158,11,0.45);
+  transform: translateY(-1px);
+}
+
+.btn-center {
+  flex: 0;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  background: var(--surface2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 1rem;
+}
+
+.btn-center:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(245,158,11,0.08);
+}
+
+/* ── Word Grid (All Words) ── */
+.section-title {
+  width: 100%;
+  max-width: 520px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.word-grid {
+  width: 100%;
+  max-width: 520px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+
+.word-pill {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition), transform var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.word-pill:hover {
+  border-color: var(--accent);
+  background: rgba(245,158,11,0.06);
+  transform: translateY(-2px);
+}
+
+.word-pill.active {
+  border-color: var(--accent);
+  background: rgba(245,158,11,0.1);
+}
+
+.pill-en {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.pill-tr {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+/* ── Speaking animation ── */
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(245,158,11,0.5); }
+  70%  { box-shadow: 0 0 0 10px rgba(245,158,11,0); }
+  100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+}
+
+.speak-btn.speaking {
+  animation: pulse-ring 0.8s ease-out 2;
+}
+
+/* ── Slide-in animation on card change ── */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.scene.animate {
+  animation: slideIn 0.35s ease-out;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .scene { height: 300px; }
+  .nav-buttons { gap: 0.6rem; }
+  .word-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+  .card { transition: none !important; }
+}
