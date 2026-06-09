@@ -5,14 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="WordFlip — İngilizce kelime öğrenme uygulaması" />
   <title>WordFlip — İngilizce Öğren</title>
-
-  <!-- Preconnect for Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Favicon emoji -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
 </head>
 <body>
@@ -26,10 +21,29 @@
     <button class="theme-toggle" id="themeToggle" title="Temayı değiştir" aria-label="Temayı değiştir">☀️</button>
   </header>
 
-  <!-- ── Progress ── -->
+  <!-- ── Learned Stats Bar ── -->
+  <div class="stats-bar">
+    <div class="stats-info">
+      <span>🎯 Öğrenme Durumu</span>
+      <span id="statLearned">0 / 25 öğrenildi · %0</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill stat-fill" id="statLearnedBar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- ── Filter Buttons ── -->
+  <div class="filter-bar">
+    <button class="filter-btn filter-active" data-filter="all">Tümü</button>
+    <button class="filter-btn" data-filter="learned">✅ Öğrendim</button>
+    <button class="filter-btn" data-filter="difficult">⚠️ Zor</button>
+    <button class="filter-btn" data-filter="favorites">⭐ Favori</button>
+  </div>
+
+  <!-- ── Card Progress ── -->
   <div class="progress-container">
     <div class="progress-info">
-      <span>İlerleme</span>
+      <span>Kart</span>
       <span id="progressText">1 / 25</span>
     </div>
     <div class="progress-track">
@@ -41,7 +55,7 @@
   <div class="scene" id="scene" role="button" tabindex="0" aria-label="Kartı çevirmek için tıkla">
     <div class="card" id="card">
 
-      <!-- FRONT: English word -->
+      <!-- FRONT -->
       <div class="card__face card__front">
         <p class="card-hint">İngilizce</p>
         <h1 class="card-word" id="word">—</h1>
@@ -53,10 +67,18 @@
           </svg>
           Dinle
         </button>
+
+        <!-- Aksiyon Butonları -->
+        <div class="card-actions">
+          <button class="action-btn btn-learned"   id="btnLearned"   title="Öğrendim">✅ Öğrendim</button>
+          <button class="action-btn btn-difficult" id="btnDifficult" title="Zor">⚠️ Zor</button>
+          <button class="action-btn btn-favorite"  id="btnFavorite"  title="Favori">⭐</button>
+        </div>
+
         <span class="flip-hint">Çevirmek için tıkla</span>
       </div>
 
-      <!-- BACK: Turkish + example -->
+      <!-- BACK -->
       <div class="card__face card__back">
         <p class="card-hint">Türkçe Anlam</p>
         <h2 class="card-turkish" id="turkish">—</h2>
@@ -68,21 +90,22 @@
     </div>
   </div>
 
-  <!-- ── Navigation ── -->
-  <div class="nav-buttons">
-    <button class="btn btn-secondary" id="btnPrev" aria-label="Önceki kelime">
-      ← Önceki
-    </button>
-    <button class="btn btn-center" id="btnShuffle" title="Karıştır" aria-label="Kelimeleri karıştır">
-      🔀
-    </button>
-    <button class="btn btn-primary" id="btnNext" aria-label="Sonraki kelime">
-      Sonraki →
-    </button>
+  <!-- ── Empty State ── -->
+  <div class="empty-state" id="emptyState" style="display:none">
+    <span class="empty-icon">🗂️</span>
+    <p>Bu kategoride henüz kelime yok.</p>
+    <small>Kartlardaki butonları kullanarak ekleyebilirsin.</small>
   </div>
 
-  <!-- ── All Words Grid ── -->
-  <p class="section-title">Tüm Kelimeler</p>
+  <!-- ── Navigation ── -->
+  <div class="nav-buttons">
+    <button class="btn btn-secondary" id="btnPrev" aria-label="Önceki kelime">← Önceki</button>
+    <button class="btn btn-center"    id="btnShuffle" title="Karıştır" aria-label="Kelimeleri karıştır">🔀</button>
+    <button class="btn btn-primary"   id="btnNext" aria-label="Sonraki kelime">Sonraki →</button>
+  </div>
+
+  <!-- ── Word Grid ── -->
+  <p class="section-title">Kelimeler</p>
   <div class="word-grid" id="wordGrid"></div>
 
   <!-- ── Keyboard hint ── -->
